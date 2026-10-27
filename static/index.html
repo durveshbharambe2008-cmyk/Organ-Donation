@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Organ Donation Management System</title>
+  <link rel="stylesheet" href="/css/style.css">
+</head>
+<body class="app-body">
+  <div class="app-layout">
+    <!-- Sidebar -->
+    <aside class="sidebar">
+      <div class="sidebar-header">
+        <h2 class="sidebar-title">Organ Donation</h2>
+        <span class="sidebar-badge">Hospital Desk</span>
+      </div>
+
+      <nav class="sidebar-nav">
+        <a href="#dashboard" class="nav-item active" data-page="dashboard">
+          <span class="nav-icon">📊</span>
+          <span class="nav-label">Dashboard</span>
+        </a>
+        <a href="#donors" class="nav-item" data-page="donors">
+          <span class="nav-icon">👤</span>
+          <span class="nav-label">Donors</span>
+        </a>
+        <a href="#recipients" class="nav-item" data-page="recipients">
+          <span class="nav-icon">🏥</span>
+          <span class="nav-label">Recipients</span>
+        </a>
+        <a href="#donations" class="nav-item" data-page="donations">
+          <span class="nav-icon">🎁</span>
+          <span class="nav-label">Donations</span>
+        </a>
+        <a href="#requests" class="nav-item" data-page="requests">
+          <span class="nav-icon">📋</span>
+          <span class="nav-label">Requests</span>
+        </a>
+        <a href="#matches" class="nav-item" data-page="matches">
+          <span class="nav-icon">🔗</span>
+          <span class="nav-label">Matching &amp; Transplants</span>
+        </a>
+      </nav>
+
+      <div class="sidebar-footer">
+        <div class="user-info">
+          <span class="user-role">Signed in as</span>
+          <strong id="current-username" class="user-name">Admin</strong>
+        </div>
+        <button id="btn-signout" class="btn btn-outline-light btn-sm btn-block">Sign out</button>
+      </div>
+    </aside>
+
+    <!-- Main Content Area -->
+    <main class="main-content">
+      <header class="content-header">
+        <div class="header-left">
+          <h1 id="page-title" class="page-title">Dashboard</h1>
+          <p id="page-subtitle" class="page-subtitle">Hospital organ donation overview and statistics</p>
+        </div>
+        <div id="page-actions" class="header-right"></div>
+      </header>
+
+      <div id="content-body" class="content-body">
+        <!-- Injected via JavaScript -->
+      </div>
+    </main>
+  </div>
+
+  <!-- Generic Form Modal Dialog -->
+  <dialog id="form-dialog" class="app-dialog">
+    <div class="dialog-content">
+      <div class="dialog-header">
+        <h3 id="form-dialog-title" class="dialog-title">Form</h3>
+        <button type="button" class="dialog-close-btn" onclick="ui.closeDialog('form-dialog')">&times;</button>
+      </div>
+      <div id="form-dialog-error" class="dialog-error" style="display: none;"></div>
+      <form id="generic-form" class="modal-form">
+        <div id="form-fields-container" class="form-fields"></div>
+        <div class="dialog-actions">
+          <button type="button" class="btn btn-secondary" onclick="ui.closeDialog('form-dialog')">Cancel</button>
+          <button type="submit" id="form-submit-btn" class="btn btn-primary">Save</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- Record Transplant Modal Dialog -->
+  <dialog id="transplant-dialog" class="app-dialog">
+    <div class="dialog-content">
+      <div class="dialog-header">
+        <h3 class="dialog-title">Record Transplant Surgery</h3>
+        <button type="button" class="dialog-close-btn" onclick="ui.closeDialog('transplant-dialog')">&times;</button>
+      </div>
+      <div id="transplant-dialog-error" class="dialog-error" style="display: none;"></div>
+      <form id="transplant-form" class="modal-form">
+        <input type="hidden" id="transplant-donation-id" name="donation_id">
+        <input type="hidden" id="transplant-request-id" name="request_id">
+
+        <div class="form-row-readonly">
+          <div class="form-group">
+            <label>Donor</label>
+            <div id="transplant-donor-info" class="readonly-box">—</div>
+          </div>
+          <div class="form-group">
+            <label>Recipient (Patient)</label>
+            <div id="transplant-patient-info" class="readonly-box">—</div>
+          </div>
+          <div class="form-group">
+            <label>Organ &amp; Blood Group</label>
+            <div id="transplant-organ-info" class="readonly-box">—</div>
+          </div>
+        </div>
+
+        <div class="form-group">
+          <label for="transplant-surgeon">Surgeon Name <span class="required">*</span></label>
+          <input type="text" id="transplant-surgeon" name="surgeon_name" required placeholder="e.g. Dr. R. Kulkarni">
+        </div>
+
+        <div class="form-group">
+          <label for="transplant-date">Transplant Date <span class="required">*</span></label>
+          <input type="date" id="transplant-date" name="transplant_date" required>
+        </div>
+
+        <div class="form-group">
+          <label for="transplant-outcome">Initial Outcome <span class="required">*</span></label>
+          <select id="transplant-outcome" name="outcome" required>
+            <option value="SUCCESSFUL">SUCCESSFUL</option>
+            <option value="COMPLICATIONS">COMPLICATIONS</option>
+            <option value="FAILED">FAILED</option>
+          </select>
+        </div>
+
+        <div class="dialog-actions">
+          <button type="button" class="btn btn-secondary" onclick="ui.closeDialog('transplant-dialog')">Cancel</button>
+          <button type="submit" id="transplant-submit-btn" class="btn btn-primary">Confirm Transplant</button>
+        </div>
+      </form>
+    </div>
+  </dialog>
+
+  <!-- Confirmation Modal Dialog -->
+  <dialog id="confirm-dialog" class="app-dialog dialog-sm">
+    <div class="dialog-content">
+      <div class="dialog-header">
+        <h3 class="dialog-title">Confirm Deletion</h3>
+      </div>
+      <p id="confirm-dialog-msg" class="confirm-message">Delete this record? This cannot be undone.</p>
+      <div class="dialog-actions">
+        <button type="button" id="confirm-cancel-btn" class="btn btn-secondary">Cancel</button>
+        <button type="button" id="confirm-dialog-btn" class="btn btn-danger">Delete</button>
+      </div>
+    </div>
+  </dialog>
+
+  <!-- Toast Notification Container -->
+  <div id="toast-container" class="toast-container"></div>
+
+  <!-- Scripts -->
+  <script src="/js/api.js"></script>
+  <script src="/js/ui.js"></script>
+  <script src="/js/app.js"></script>
+</body>
+</html>

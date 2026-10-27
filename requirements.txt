@@ -1,0 +1,4 @@
+Flask
+mysql-connector-python
+python-dotenv
+gunicorn; sys_platform != 'win32'
