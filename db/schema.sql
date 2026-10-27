@@ -10,7 +10,6 @@
 --   * Creates missing tables and triggers.
 --   * Existing tables are NOT automatically altered.
 -- ============================================================
-
 USE defaultdb;
 
 -- ============================================================
