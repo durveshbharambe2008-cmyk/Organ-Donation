@@ -1,80 +1,79 @@
+
 import os
 import mysql.connector
 from mysql.connector import pooling
-try:
-    from dotenv import load_dotenv
-    load_dotenv()
-except ImportError:
-    _env_path = os.path.join(os.path.dirname(__file__), ".env")
-    if os.path.isfile(_env_path):
-        with open(_env_path, "r", encoding="utf-8") as _f:
-            for _line in _f:
-                _line = _line.strip()
-                if _line and not _line.startswith("#") and "=" in _line:
-                    _k, _v = _line.split("=", 1)
-                    _v = _v.strip()
-                    if (_v.startswith('"') and _v.endswith('"')) or (_v.startswith("'") and _v.endswith("'")):
-                        _v = _v[1:-1]
-                    os.environ.setdefault(_k.strip(), _v)
+from dotenv import load_dotenv
+
+load_dotenv()
 
 _pool = None
 
 def get_pool():
     global _pool
+
     if _pool is None:
+        ca_path = os.path.join(
+            os.path.dirname(os.path.abspath(__file__)),
+            "certs",
+            "ca.pem"
+        )
+
+        if not os.path.isfile(ca_path):
+            raise FileNotFoundError(
+                f"MySQL CA certificate not found: {ca_path}"
+            )
+
         _pool = pooling.MySQLConnectionPool(
             pool_name="organ_donation_pool",
             pool_size=5,
             pool_reset_session=True,
-            host=os.getenv("DB_HOST", "localhost"),
-            port=int(os.getenv("DB_PORT", 3306)),
-            user=os.getenv("DB_USER", "root"),
-            password=os.getenv("DB_PASSWORD", ""),
-            database=os.getenv("DB_NAME", "defaultdb")
+            host=os.environ["DB_HOST"],
+            port=int(os.getenv("DB_PORT", "3306")),
+            user=os.environ["DB_USER"],
+            password=os.environ["DB_PASSWORD"],
+            database=os.environ["DB_NAME"],
+            ssl_ca=ca_path,
+            ssl_verify_cert=True,
+            ssl_verify_identity=True,
         )
+
     return _pool
+
 
 def get_connection():
     return get_pool().get_connection()
 
+
 def query(sql, params=None):
-    """
-    Executes a SELECT query and returns a list of dictionaries.
-    """
+    """Execute a SELECT query and return rows as dictionaries."""
     conn = get_connection()
     try:
         cursor = conn.cursor(dictionary=True)
         try:
             cursor.execute(sql, params or ())
-            rows = cursor.fetchall()
-            return rows
+            return cursor.fetchall()
         finally:
             cursor.close()
     finally:
         conn.close()
+
 
 def query_one(sql, params=None):
-    """
-    Executes a SELECT query and returns the first row as a dictionary or None.
-    """
+    """Execute a SELECT query and return one row or None."""
     conn = get_connection()
     try:
         cursor = conn.cursor(dictionary=True)
         try:
             cursor.execute(sql, params or ())
-            row = cursor.fetchone()
-            return row
+            return cursor.fetchone()
         finally:
             cursor.close()
     finally:
         conn.close()
 
+
 def execute(sql, params=None):
-    """
-    Executes an INSERT, UPDATE, or DELETE query.
-    Commits on success, rolls back on error, and always closes the connection.
-    Returns a dict with 'lastrowid' and 'rowcount'.
-    """
+    """Execute an INSERT, UPDATE, or DELETE query."""
     conn = get_connection()
     try:
         cursor = conn.cursor()
